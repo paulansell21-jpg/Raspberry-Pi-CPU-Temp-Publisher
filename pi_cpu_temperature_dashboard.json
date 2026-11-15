@@ -154,11 +154,11 @@
         },
         "showUnfilled": true
       },
-      "title": "Current Load Averages (1m / 5m / 15m — 4 Cores)",
+      "title": "Current Load Averages (01m / 05m / 15m — 4 Cores)",
       "type": "bargauge",
       "targets": [
         {
-          "query": "from(bucket: \"climate\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"climate\" and (r._field == \"load_1m\" or r._field == \"load_5m\" or r._field == \"load_15m\") and r.room =~ /.*_cpu$/)\n  |> last()\n  |> map(fn: (r) => ({ r with label: r.station_id + \" \" + r._field }))\n  |> keep(columns: [\"_time\", \"_value\", \"label\"])\n  |> group(columns: [\"label\"])",
+          "query": "from(bucket: \"climate\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"climate\" and (r._field == \"load_1m\" or r._field == \"load_5m\" or r._field == \"load_15m\") and r.room =~ /.*_cpu$/)\n  |> last()\n  |> map(fn: (r) => ({\n      r with label: r.station_id + (if r._field == \"load_1m\" then \" load 01m\" else if r._field == \"load_5m\" then \" load 05m\" else \" load 15m\")\n    }))\n  |> keep(columns: [\"_time\", \"_value\", \"label\"])\n  |> group(columns: [\"label\"])",
           "refId": "A"
         }
       ]
@@ -285,11 +285,11 @@
           "sort": "desc"
         }
       },
-      "title": "Raspberry Pi Load Average History (1m / 5m / 15m)",
+      "title": "Raspberry Pi Load Average History (01m / 05m / 15m)",
       "type": "timeseries",
       "targets": [
         {
-          "query": "from(bucket: \"climate\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"climate\" and (r._field == \"load_1m\" or r._field == \"load_5m\" or r._field == \"load_15m\") and r.room =~ /.*_cpu$/)\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({ r with series: r.station_id + \" (\" + r._field + \")\" }))\n  |> keep(columns: [\"_time\", \"_value\", \"series\"])\n  |> group(columns: [\"series\"])",
+          "query": "from(bucket: \"climate\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"climate\" and (r._field == \"load_1m\" or r._field == \"load_5m\" or r._field == \"load_15m\") and r.room =~ /.*_cpu$/)\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({\n      r with series: r.station_id + (if r._field == \"load_1m\" then \" (01m)\" else if r._field == \"load_5m\" then \" (05m)\" else \" (15m)\")\n    }))\n  |> keep(columns: [\"_time\", \"_value\", \"series\"])\n  |> group(columns: [\"series\"])",
           "refId": "A"
         }
       ]
@@ -394,9 +394,29 @@
       },
       "title": "Raspberry Pi Fleet Hardware, Temperature & Load Summary",
       "type": "table",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {
+              "display_name": 0,
+              "station_id": 1,
+              "temperature_c": 2,
+              "load_1m": 3,
+              "load_5m": 4,
+              "load_15m": 5,
+              "_time": 6,
+              "model": 7,
+              "subject": 8
+            },
+            "renameByName": {}
+          }
+        }
+      ],
       "targets": [
         {
-          "query": "from(bucket: \"climate\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"climate\" and (r._field == \"temperature_c\" or r._field == \"load_1m\" or r._field == \"load_5m\" or r._field == \"load_15m\") and r.room =~ /.*_cpu$/)\n  |> last()\n  |> pivot(rowKey: [\"_time\", \"display_name\", \"station_id\", \"model\", \"subject\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"display_name\", \"station_id\", \"model\", \"temperature_c\", \"load_1m\", \"load_5m\", \"load_15m\", \"subject\", \"_time\"])\n  |> group()",
+          "query": "from(bucket: \"climate\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"climate\" and (r._field == \"temperature_c\" or r._field == \"load_1m\" or r._field == \"load_5m\" or r._field == \"load_15m\") and r.room =~ /.*_cpu$/)\n  |> last()\n  |> pivot(rowKey: [\"_time\", \"display_name\", \"station_id\", \"model\", \"subject\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"display_name\", \"station_id\", \"temperature_c\", \"load_1m\", \"load_5m\", \"load_15m\", \"_time\", \"model\", \"subject\"])\n  |> group()",
           "refId": "A"
         }
       ]
@@ -412,5 +432,5 @@
   "timezone": "browser",
   "title": "White Hatch - Raspberry Pi CPU & Load Telemetry",
   "uid": "white-hatch-pi-cpu-temp",
-  "version": 2
+  "version": 3
 }
