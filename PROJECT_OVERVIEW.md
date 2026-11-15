@@ -78,21 +78,24 @@ nats_port = 4222
 ### Sample Published JSON
 ```json
 {
-  "timestamp_utc": "2026-11-14T16:20:01.284000+00:00",
+  "timestamp_utc": "2026-11-15T16:23:59.426489+00:00",
   "device_id": "rp3_cpu",
   "room": "rp3_cpu",
   "display_name": "RP3 CPU",
   "station_id": "rp3",
   "house_name": "White Hatch",
   "model": "Raspberry Pi 3 Model B Rev 1.2",
-  "temperature_c": 43.47,
-  "temperature_f": 110.25,
+  "temperature_c": 42.93,
+  "temperature_f": 109.28,
+  "load_1m": 0.36,
+  "load_5m": 0.28,
+  "load_15m": 0.32,
   "online": true
 }
 ```
 
 ### Telegraf `json_v2` Requirement (`/etc/telegraf/telegraf.conf`)
-Because Raspberry Pi CPU telemetry does not include humidity, battery, or RF signal fields, those three fields in `/etc/telegraf/telegraf.conf` under `[[inputs.nats_consumer.json_v2]]` must have `optional = true`:
+Because Raspberry Pi CPU telemetry includes `load_1m`, `load_5m`, and `load_15m` (and does not include humidity, battery, or RF signal fields), those fields in `/etc/telegraf/telegraf.conf` under `[[inputs.nats_consumer.json_v2]]` are marked `optional = true`:
 
 ```toml
     [[inputs.nats_consumer.json_v2.field]]
@@ -112,6 +115,18 @@ Because Raspberry Pi CPU telemetry does not include humidity, battery, or RF sig
     [[inputs.nats_consumer.json_v2.field]]
       path = "rf_level"
       type = "int"
+      optional = true
+    [[inputs.nats_consumer.json_v2.field]]
+      path = "load_1m"
+      type = "float"
+      optional = true
+    [[inputs.nats_consumer.json_v2.field]]
+      path = "load_5m"
+      type = "float"
+      optional = true
+    [[inputs.nats_consumer.json_v2.field]]
+      path = "load_15m"
+      type = "float"
       optional = true
 ```
 

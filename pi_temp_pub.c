@@ -30,6 +30,7 @@
 #include <unistd.h>
 
 #define THERMAL_PATH "/sys/class/thermal/thermal_zone0/temp"
+#define LOADAVG_PATH "/proc/loadavg"
 #define MODEL_PATH   "/proc/device-tree/model"
 
 typedef struct {
@@ -156,6 +157,21 @@ static double read_cpu_temp_c(void) {
     return (double)millideg / 1000.0;
 }
 
+static void read_load_averages(double *load_1m, double *load_5m, double *load_15m) {
+    *load_1m = 0.0;
+    *load_5m = 0.0;
+    *load_15m = 0.0;
+    FILE *fp = fopen(LOADAVG_PATH, "r");
+    if (!fp) {
+        perror("Failed to open " LOADAVG_PATH);
+        return;
+    }
+    if (fscanf(fp, "%lf %lf %lf", load_1m, load_5m, load_15m) != 3) {
+        fprintf(stderr, "Warning: Could not parse all load averages from %s\n", LOADAVG_PATH);
+    }
+    fclose(fp);
+}
+
 static void read_pi_model(char *buf, size_t size) {
     FILE *fp = fopen(MODEL_PATH, "r");
     if (!fp) {
@@ -231,6 +247,9 @@ int main(int argc, char *argv[]) {
     double temp_c = read_cpu_temp_c();
     double temp_f = temp_c * 9.0 / 5.0 + 32.0;
 
+    double load_1m = 0.0, load_5m = 0.0, load_15m = 0.0;
+    read_load_averages(&load_1m, &load_5m, &load_15m);
+
     char model[128];
     read_pi_model(model, sizeof(model));
 
@@ -256,10 +275,13 @@ int main(int argc, char *argv[]) {
         "\"model\":\"%s\","
         "\"temperature_c\":%.2f,"
         "\"temperature_f\":%.2f,"
+        "\"load_1m\":%.2f,"
+        "\"load_5m\":%.2f,"
+        "\"load_15m\":%.2f,"
         "\"online\":true"
         "}",
         timestamp_utc, cfg.room, cfg.room, cfg.display_name, hostname,
-        cfg.house_name, model, temp_c, temp_f);
+        cfg.house_name, model, temp_c, temp_f, load_1m, load_5m, load_15m);
 
     printf("Config  : %s\n", config_path);
     printf("Server  : nats://%s:%s\n", cfg.nats_host, cfg.nats_port);

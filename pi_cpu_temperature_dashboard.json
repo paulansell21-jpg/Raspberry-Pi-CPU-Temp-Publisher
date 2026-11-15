@@ -46,7 +46,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 0 },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
       "id": 1,
       "options": {
         "colorMode": "background",
@@ -94,7 +94,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 0 },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
       "id": 2,
       "options": {
         "orientation": "auto",
@@ -111,6 +111,54 @@
       "targets": [
         {
           "query": "from(bucket: \"climate\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"climate\" and r._field == \"temperature_c\" and r.room =~ /.*_cpu$/)\n  |> last()\n  |> keep(columns: [\"_time\", \"_value\", \"display_name\"])\n  |> group(columns: [\"display_name\"])",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "influxdb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "max": 4,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1.5 },
+              { "color": "orange", "value": 2.5 },
+              { "color": "red", "value": 3.5 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "id": 3,
+      "options": {
+        "displayMode": "lcd",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true
+      },
+      "title": "Current Load Averages (1m / 5m / 15m — 4 Cores)",
+      "type": "bargauge",
+      "targets": [
+        {
+          "query": "from(bucket: \"climate\")\n  |> range(start: -2h)\n  |> filter(fn: (r) => r._measurement == \"climate\" and (r._field == \"load_1m\" or r._field == \"load_5m\" or r._field == \"load_15m\") and r.room =~ /.*_cpu$/)\n  |> last()\n  |> map(fn: (r) => ({ r with label: r.station_id + \" \" + r._field }))\n  |> keep(columns: [\"_time\", \"_value\", \"label\"])\n  |> group(columns: [\"label\"])",
           "refId": "A"
         }
       ]
@@ -157,8 +205,8 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 6 },
-      "id": 3,
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 6 },
+      "id": 4,
       "options": {
         "legend": {
           "calcs": ["lastNotNull", "min", "max", "mean"],
@@ -176,6 +224,72 @@
       "targets": [
         {
           "query": "from(bucket: \"climate\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"climate\" and r._field == \"temperature_c\" and r.room =~ /.*_cpu$/)\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"display_name\"])\n  |> group(columns: [\"display_name\"])",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "influxdb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "System Load Average",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "dashed" }
+          },
+          "decimals": 2,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "transparent", "value": null },
+              { "color": "orange", "value": 2.5 },
+              { "color": "red", "value": 4.0 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 6 },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull", "min", "max", "mean"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Raspberry Pi Load Average History (1m / 5m / 15m)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "query": "from(bucket: \"climate\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"climate\" and (r._field == \"load_1m\" or r._field == \"load_5m\" or r._field == \"load_15m\") and r.room =~ /.*_cpu$/)\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({ r with series: r.station_id + \" (\" + r._field + \")\" }))\n  |> keep(columns: [\"_time\", \"_value\", \"series\"])\n  |> group(columns: [\"series\"])",
           "refId": "A"
         }
       ]
@@ -210,11 +324,29 @@
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "_value" },
+            "matcher": { "id": "byName", "options": "temperature_c" },
             "properties": [
               { "id": "displayName", "value": "Temp (°C)" },
               { "id": "unit", "value": "celsius" },
               { "id": "custom.cellOptions", "value": { "type": "color-background" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "load_1m" },
+            "properties": [
+              { "id": "displayName", "value": "Load 1m" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "load_5m" },
+            "properties": [
+              { "id": "displayName", "value": "Load 5m" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "load_15m" },
+            "properties": [
+              { "id": "displayName", "value": "Load 15m" }
             ]
           },
           {
@@ -249,8 +381,8 @@
           }
         ]
       },
-      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 16 },
-      "id": 4,
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 16 },
+      "id": 6,
       "options": {
         "showHeader": true,
         "sortBy": [
@@ -260,11 +392,11 @@
           }
         ]
       },
-      "title": "Raspberry Pi Fleet Hardware & Latest Telemetry",
+      "title": "Raspberry Pi Fleet Hardware, Temperature & Load Summary",
       "type": "table",
       "targets": [
         {
-          "query": "from(bucket: \"climate\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"climate\" and r._field == \"temperature_c\" and r.room =~ /.*_cpu$/)\n  |> last()\n  |> keep(columns: [\"display_name\", \"station_id\", \"model\", \"subject\", \"_value\", \"_time\"])\n  |> group()",
+          "query": "from(bucket: \"climate\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"climate\" and (r._field == \"temperature_c\" or r._field == \"load_1m\" or r._field == \"load_5m\" or r._field == \"load_15m\") and r.room =~ /.*_cpu$/)\n  |> last()\n  |> pivot(rowKey: [\"_time\", \"display_name\", \"station_id\", \"model\", \"subject\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"display_name\", \"station_id\", \"model\", \"temperature_c\", \"load_1m\", \"load_5m\", \"load_15m\", \"subject\", \"_time\"])\n  |> group()",
           "refId": "A"
         }
       ]
@@ -273,12 +405,12 @@
   "refresh": "5m",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["raspberry-pi", "cpu-temp", "nats", "white-hatch"],
+  "tags": ["raspberry-pi", "cpu-temp", "load-average", "nats", "white-hatch"],
   "templating": { "list": [] },
   "time": { "from": "now-24h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "White Hatch - Raspberry Pi CPU Temperatures",
+  "title": "White Hatch - Raspberry Pi CPU & Load Telemetry",
   "uid": "white-hatch-pi-cpu-temp",
-  "version": 1
+  "version": 2
 }

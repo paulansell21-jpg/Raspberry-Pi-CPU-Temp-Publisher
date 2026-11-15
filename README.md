@@ -1,6 +1,6 @@
 # Raspberry Pi CPU Temp Publisher (`pi-temp-pub`)
 
-A zero-dependency, native C binary (`pi-temp-pub`) for Raspberry Pi devices that reads the SoC thermal sensor (`/sys/class/thermal/thermal_zone0/temp`), detects the device hostname and hardware revision (`/proc/device-tree/model`), and publishes a standardized JSON telemetry payload directly to a **NATS** broker over TCP (`:4222`).
+A zero-dependency, native C binary (`pi-temp-pub`) for Raspberry Pi devices that reads the SoC thermal sensor (`/sys/class/thermal/thermal_zone0/temp`) and system load averages (`/proc/loadavg`), detects the device hostname and hardware revision (`/proc/device-tree/model`), and publishes a standardized JSON telemetry payload directly to a **NATS** broker over TCP (`:4222`).
 
 Designed to run from `cron` across multiple Raspberry Pis with **zero Python runtime, virtual environments, or third-party libraries required**.
 
@@ -12,7 +12,7 @@ Designed to run from `cron` across multiple Raspberry Pis with **zero Python run
 - **Automatic Hardware & Hostname Detection:** Reads the Pi's hostname (e.g. `rp3`, `rp3b`) and hardware model (e.g. `Raspberry Pi 3 Model B Rev 1.2`, `Raspberry Pi 3 Model B Plus Rev 1.3`).
 - **Auto-Discovered Config File (`pi-temp-pub.conf`):** Automatically loads `pi-temp-pub.conf` from the same folder as the binary (via `/proc/self/exe`), even when invoked by `cron`.
 - **Sensible Built-in Defaults:** Defaults to `nats://127.0.0.1:4222` and subject `sensors.xsense.<hostname>_cpu.telemetry` if no config file or override is set.
-- **Drop-In InfluxDB & Grafana Compatibility:** Matches the `climate` JSON schema (`temperature_c`, `temperature_f`, `room`, `display_name`, `device_id`, `station_id`, `model`, `house_name`, `timestamp_utc`) ingested by Telegraf into InfluxDB v2.
+- **Drop-In InfluxDB & Grafana Compatibility:** Matches the `climate` JSON schema (`temperature_c`, `temperature_f`, `load_1m`, `load_5m`, `load_15m`, `room`, `display_name`, `device_id`, `station_id`, `model`, `house_name`, `timestamp_utc`) ingested by Telegraf into InfluxDB v2.
 
 ---
 
